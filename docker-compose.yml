@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # Express Server
+  express-app:
+    build: .
+    container_name: express-basic-server
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      - .:/app
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # Caddy Reverse Proxy
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+      - "8081:8081"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./logs:/var/log/caddy
+    restart: unless-stopped
+    networks:
+      - app-network
+    depends_on:
+      - express-app
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  app-network:
+    driver: bridge
